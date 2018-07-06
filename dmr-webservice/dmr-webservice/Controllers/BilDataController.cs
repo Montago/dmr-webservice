@@ -16,7 +16,7 @@
         /// <param name="nummerplade">Nummerplade på køretøj</param>
         /// <returns>Bildata objekt</returns>
         [System.Web.Http.Route("api/{nummerplade}")]
-        [CacheOutput(ClientTimeSpan = 30, ServerTimeSpan = 30)]
+        [CacheOutput(ClientTimeSpan = 7200, ServerTimeSpan = 7200)]
         public async Task<Bildata> Get(string nummerplade)
         {
             return await DMRProxy.HentOplysninger(nummerplade, DateTime.Now);
@@ -29,7 +29,7 @@
         /// <param name="dato">Dato for historisk opslag</param>
         /// <returns>Bildata objekt</returns>
         [System.Web.Http.Route("api/{nummerplade}/{dato}")]
-        [CacheOutput(ClientTimeSpan = 30, ServerTimeSpan = 30)]
+        [CacheOutput(ClientTimeSpan = 7200, ServerTimeSpan = 7200)]
         public async Task<Bildata> Get(string nummerplade, DateTime dato)
         {
             return await DMRProxy.HentOplysninger(nummerplade, dato);
