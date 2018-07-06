@@ -15,3 +15,17 @@ select,
 textarea {
     max-width: 280px;
 }
+
+em {
+    background-color: #EEE;
+    border: 1px solid #CCC;
+    color: magenta;
+    padding: 3px 5px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-style: normal;
+}
+
+i {
+    color: magenta;
+}
