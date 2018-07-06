@@ -195,6 +195,10 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\BilData.cs" />
+    <Compile Include="Models\DMRAfgifter.cs" />
+    <Compile Include="Models\DMRKøretøj.cs" />
+    <Compile Include="Models\DMRSyn.cs" />
+    <Compile Include="Models\DMRTeknisk.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
