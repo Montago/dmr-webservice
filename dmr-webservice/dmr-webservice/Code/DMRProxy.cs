@@ -31,7 +31,6 @@
             string PlateField = "";
             Bildata bildata = new Bildata();
 
-
             var startPage = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_nfpb=true&_pageLabel=vis_koeretoej_side&_nfls=false");
 
             if (startPage.IsSuccessStatusCode)
@@ -66,7 +65,7 @@
                     // Fail Fast...
                     if (MotorResult.Contains("Ingen køretøjer fundet."))
                     {
-                        throw new Exception("Ingen køretøjer fundet.");
+                        throw new HttpException((int)HttpStatusCode.NotFound, "Ingen køretøjer fundet.");
                     }
 
                     ParseKøretøjData(bildata, MotorResult);
@@ -98,7 +97,7 @@
                 }
             }
 
-            return bildata;
+            throw new HttpException((int)HttpStatusCode.ServiceUnavailable, "Motorregisteret er utilgængeligt");
         }
 
         private static void ParseAfgiftsData(Bildata bildata, string MotorResult)

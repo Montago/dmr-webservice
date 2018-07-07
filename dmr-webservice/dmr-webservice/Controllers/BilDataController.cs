@@ -1,11 +1,16 @@
-﻿namespace dmr_webservice.Controllers
+﻿#pragma warning disable 1591;
+
+namespace dmr_webservice.Controllers
 {
     using dmr_webservice.Code;
     using dmr_webservice.Models;
     using System;
     using System.Threading.Tasks;
+    using System.Net.Http;
+    using System.Web;
     using System.Web.Http;
     using WebApi.OutputCache.V2;
+    using System.Net;
 
     [System.Web.Http.Route("api")]
     public class BildataController : ApiController
@@ -19,7 +24,20 @@
         [CacheOutput(ClientTimeSpan = 7200, ServerTimeSpan = 7200)]
         public async Task<Bildata> Get(string nummerplade)
         {
-            return await DMRProxy.HentOplysninger(nummerplade, DateTime.Now);
+            try
+            {
+                return await DMRProxy.HentOplysninger(nummerplade, DateTime.Now);
+            }
+            catch (HttpException ex)
+            {
+                Request.CreateErrorResponse((HttpStatusCode)ex.ErrorCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -32,7 +50,21 @@
         [CacheOutput(ClientTimeSpan = 7200, ServerTimeSpan = 7200)]
         public async Task<Bildata> Get(string nummerplade, DateTime dato)
         {
-            return await DMRProxy.HentOplysninger(nummerplade, dato);
+            try
+            {
+                return await DMRProxy.HentOplysninger(nummerplade, dato);
+            }
+            catch (HttpException ex)
+            {
+                Request.CreateErrorResponse((HttpStatusCode)ex.ErrorCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return null;
+            
         }
     }
 }
