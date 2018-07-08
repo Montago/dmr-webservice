@@ -21,7 +21,7 @@ namespace dmr_webservice.Controllers
         /// <param name="nummerplade">Nummerplade på køretøj</param>
         /// <returns>Bildata objekt</returns>
         [System.Web.Http.Route("api/{nummerplade}")]
-        [CacheOutput(ClientTimeSpan = 7200, ServerTimeSpan = 7200)]
+        [CacheOutput(ClientTimeSpan = 33, ServerTimeSpan = 33)]
         public async Task<Bildata> Get(string nummerplade)
         {
             try
@@ -47,7 +47,7 @@ namespace dmr_webservice.Controllers
         /// <param name="dato">Dato for historisk opslag</param>
         /// <returns>Bildata objekt</returns>
         [System.Web.Http.Route("api/{nummerplade}/{dato}")]
-        [CacheOutput(ClientTimeSpan = 7200, ServerTimeSpan = 7200)]
+        [CacheOutput(ClientTimeSpan = 33, ServerTimeSpan = 33)]
         public async Task<Bildata> Get(string nummerplade, DateTime dato)
         {
             try

@@ -29,6 +29,8 @@
             string Token = "";
             string Radio = "";
             string PlateField = "";
+            string HistoriskText = "";
+            string HistoriskKnap = "";
             Bildata bildata = new Bildata();
 
             var startPage = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_nfpb=true&_pageLabel=vis_koeretoej_side&_nfls=false");
@@ -46,6 +48,8 @@
                 var textElement = Regex.Matches(content, "<input[^>]+?soegeord[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
                 PlateField = XElement.Parse(textElement).Attribute("name").Value;
 
+
+
                 var formContent = new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("dmrFormToken", Token),
@@ -53,10 +57,10 @@
                     new KeyValuePair<string, string>(PlateField, regnr),
                 });
 
-                HttpResponseMessage MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FfremsoegKoeretoej%2Fsearch&_pageLabel=vis_koeretoej_side", formContent),
-                    MotorInfo2,
-                    MotorInfo3,
-                    MotorInfo5;
+                HttpResponseMessage MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FfremsoegKoeretoej%2Fsearch&_pageLabel=vis_koeretoej_side", formContent);
+                HttpResponseMessage MotorInfo2 = null, 
+                                    MotorInfo3 = null, 
+                                    MotorInfo5 = null;
 
                 if (MotorInfo1.IsSuccessStatusCode)
                 {
@@ -68,11 +72,42 @@
                         throw new HttpException((int)HttpStatusCode.NotFound, "Ingen køretøjer fundet.");
                     }
 
-                    ParseKøretøjData(bildata, MotorResult);
+                    // Hent historiske data i stedet
+                    if (dato < DateTime.Now)
+                    {
+                        var historiskInput = Regex.Matches(MotorResult, "<input[^>]+?lblHstrskVsnng[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                        HistoriskText = XElement.Parse(historiskInput).Attribute("name").Value;
 
-                    MotorInfo2 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=1&_pageLabel=vis_koeretoej_side");
-                    MotorInfo3 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=2&_pageLabel=vis_koeretoej_side");
-                    MotorInfo5 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=4&_pageLabel=vis_koeretoej_side");
+                        var historiskButton = Regex.Matches(MotorResult, "<input[^>]+?lblHstrskVsnng[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                        HistoriskKnap = XElement.Parse(historiskButton).Attribute("name").Value;
+
+                        formContent = new FormUrlEncodedContent(new[]
+                        {
+                            new KeyValuePair<string, string>("dmrFormToken", Token),
+                            new KeyValuePair<string, string>(HistoriskText, dato.ToString("dd-MM-yyyy")),
+                            new KeyValuePair<string, string>(HistoriskKnap, "Hent"),
+                        });
+
+                        MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FindstilHistoriskDato&_pageLabel=vis_koeretoej_side", formContent);
+
+                        if (MotorInfo1.IsSuccessStatusCode)
+                        {
+                            MotorResult = await MotorInfo1.Content.ReadAsStringAsync();
+
+                            MotorInfo2 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=1&_pageLabel=vis_koeretoej_side");
+                            MotorInfo3 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=2&_pageLabel=vis_koeretoej_side");
+                            MotorInfo5 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=4&_pageLabel=vis_koeretoej_side");
+                        }
+                    }
+                    else
+                    {
+                        MotorInfo2 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=1&_pageLabel=vis_koeretoej_side");
+                        MotorInfo3 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=2&_pageLabel=vis_koeretoej_side");
+                        MotorInfo5 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=4&_pageLabel=vis_koeretoej_side");
+
+                    }
+
+                    ParseKøretøjData(bildata, MotorResult);
 
                     if (MotorInfo2.IsSuccessStatusCode)
                     {
@@ -96,8 +131,12 @@
                     }
                 }
             }
+            else
+            {
+                throw new HttpException((int)HttpStatusCode.ServiceUnavailable, "Motorregisteret er utilgængeligt");
+            }
 
-            throw new HttpException((int)HttpStatusCode.ServiceUnavailable, "Motorregisteret er utilgængeligt");
+            return bildata;
         }
 
         private static void ParseAfgiftsData(Bildata bildata, string MotorResult)
@@ -391,4 +430,3 @@
         }
     }
 }
-
