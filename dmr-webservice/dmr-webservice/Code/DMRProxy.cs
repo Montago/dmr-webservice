@@ -33,33 +33,33 @@
             string HistoriskKnap = "";
             Bildata bildata = new Bildata();
 
-            var startPage = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_nfpb=true&_pageLabel=vis_koeretoej_side&_nfls=false");
+            var startPage = await client.GetAsync("https://motorregister.skat.dk/dmr-kerne/dk/skat/dmr/front/portlets/koeretoejdetaljer/visKoeretoej/VisKoeretoejController.jpf");
 
             if (startPage.IsSuccessStatusCode)
             {
                 var content = await startPage.Content.ReadAsStringAsync();
 
-                var tokenElement = Regex.Matches(content, "<input[^>]+?token[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                var tokenElement = Regex.Matches(content, "<input[^>]+?dmrFormToken[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
                 Token = XElement.Parse(tokenElement).Attribute("value").Value;
 
-                var radioElement = Regex.Matches(content, "<input[^>]+?REGISTRERINGSNUMMER[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
-                Radio = XElement.Parse(radioElement).Attribute("name").Value;
+                //var radioElement = Regex.Matches(content, "<input[^>]+?REGISTRERINGSNUMMER[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                //Radio = XElement.Parse(radioElement).Attribute("name").Value;
 
-                var textElement = Regex.Matches(content, "<input[^>]+?soegeord[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
-                PlateField = XElement.Parse(textElement).Attribute("name").Value;
+                //var textElement = Regex.Matches(content, "<input[^>]+?soegeord[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                //PlateField = XElement.Parse(textElement).Attribute("name").Value;
 
 
 
                 var formContent = new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("dmrFormToken", Token),
-                    new KeyValuePair<string, string>(Radio, "REGISTRERINGSNUMMER"),
-                    new KeyValuePair<string, string>(PlateField, regnr),
+                    new KeyValuePair<string, string>("wlw-radio_button_group_key:{actionForm.soegekriterie}", "REGISTRERINGSNUMMER"),
+                    new KeyValuePair<string, string>("{actionForm.soegeord}", regnr),
                 });
 
-                HttpResponseMessage MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FfremsoegKoeretoej%2Fsearch&_pageLabel=vis_koeretoej_side", formContent);
-                HttpResponseMessage MotorInfo2 = null, 
-                                    MotorInfo3 = null, 
+                HttpResponseMessage MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-kerne/dk/skat/dmr/front/portlets/koeretoej/nested/fremsoegKoeretoej/search.do", formContent);
+                HttpResponseMessage MotorInfo2 = null,
+                                    MotorInfo3 = null,
                                     MotorInfo5 = null;
 
                 if (MotorInfo1.IsSuccessStatusCode)
@@ -73,22 +73,22 @@
                     }
 
                     // Hent historiske data i stedet
-                    if (dato < DateTime.Now)
+                    if (dato.Date < DateTime.Now.Date)
                     {
-                        var historiskInput = Regex.Matches(MotorResult, "<input[^>]+?lblHstrskVsnng[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
-                        HistoriskText = XElement.Parse(historiskInput).Attribute("name").Value;
+                        //var historiskInput = Regex.Matches(MotorResult, "<input[^>]+?lblHstrskVsnng[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                        //HistoriskText = XElement.Parse(historiskInput).Attribute("name").Value;
 
-                        var historiskButton = Regex.Matches(MotorResult, "<input[^>]+?lblHstrskVsnng[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
-                        HistoriskKnap = XElement.Parse(historiskButton).Attribute("name").Value;
+                        //var historiskButton = Regex.Matches(MotorResult, "<input[^>]+?lblHstrskVsnng[^>]+?>", RegexOptions.IgnoreCase)[0].Value;
+                        //HistoriskKnap = XElement.Parse(historiskButton).Attribute("name").Value;
 
                         formContent = new FormUrlEncodedContent(new[]
                         {
                             new KeyValuePair<string, string>("dmrFormToken", Token),
-                            new KeyValuePair<string, string>(HistoriskText, dato.ToString("dd-MM-yyyy")),
-                            new KeyValuePair<string, string>(HistoriskKnap, "Hent"),
+                            new KeyValuePair<string, string>("{pageFlow.historiskDato}", dato.ToString("dd-MM-yyyy")),
+                            new KeyValuePair<string, string>("HistoriskKnap", "Hent"),
                         });
 
-                        MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FindstilHistoriskDato&_pageLabel=vis_koeretoej_side", formContent);
+                        MotorInfo1 = await client.PostAsync("https://motorregister.skat.dk/dmr-kerne/dk/skat/dmr/front/portlets/koeretoejdetaljer/nested/visKoeretoej/indstilHistoriskDato.do", formContent);
 
                         if (MotorInfo1.IsSuccessStatusCode)
                         {
@@ -101,10 +101,9 @@
                     }
                     else
                     {
-                        MotorInfo2 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=1&_pageLabel=vis_koeretoej_side");
-                        MotorInfo3 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=2&_pageLabel=vis_koeretoej_side");
-                        MotorInfo5 = await client.GetAsync("https://motorregister.skat.dk/dmr-front/dmr.portal?_nfpb=true&_windowLabel=kerne_vis_koeretoej&kerne_vis_koeretoej_actionOverride=%2Fdk%2Fskat%2Fdmr%2Ffront%2Fportlets%2Fkoeretoej%2Fnested%2FvisKoeretoej%2FselectTab&kerne_vis_koeretoejdmr_tabset_tab=4&_pageLabel=vis_koeretoej_side");
-
+                        MotorInfo2 = await client.GetAsync("https://motorregister.skat.dk/dmr-kerne/dk/skat/dmr/front/portlets/koeretoejdetaljer/nested/visKoeretoej/selectTab.do?dmr_tabset_tab=1");
+                        MotorInfo3 = await client.GetAsync("https://motorregister.skat.dk/dmr-kerne/dk/skat/dmr/front/portlets/koeretoejdetaljer/nested/visKoeretoej/selectTab.do?dmr_tabset_tab=2");
+                        MotorInfo5 = await client.GetAsync("https://motorregister.skat.dk/dmr-kerne/dk/skat/dmr/front/portlets/koeretoejdetaljer/nested/visKoeretoej/selectTab.do?dmr_tabset_tab=4");
                     }
 
                     ParseKøretøjData(bildata, MotorResult);
